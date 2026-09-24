@@ -39,11 +39,11 @@ parcial1-voltacali/
 ├── .gitignore
 ├── README.md
 ├── src/
-│ ├── main/java/co/edu/usc/voltacali/
-│ │ ├── App.java
-│ │ └── CargadorVE.java
-│ └── test/java/co/edu/usc/voltacali/
-│ └── AppTest.java
+│   ├── main/java/co/edu/usc/voltacali/
+│   │   ├── App.java
+│   │   └── CargadorVE.java
+│   └── test/java/co/edu/usc/voltacali/
+│       └── AppTest.java
 └── docs/
     ├── Captura1.png
     ├── Captura2.png
