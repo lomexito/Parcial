@@ -2,6 +2,7 @@ package co.edu.usc.voltacali;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 public class CargadorVE {
 
@@ -19,7 +20,14 @@ public class CargadorVE {
     private Ubicacion ubicacion;
     private double potenciaActual;
 
+    private final Vector<RegistroSesion> bitacora = new Vector<RegistroSesion>();
+
+    private static int totalCargadores = 0;
+    private static int contadorRegistros = 0;
+
+    public static final double LIMITE_RED = 50.0;
     public static final double INCREMENTO_DEFECTO = 5.0;
+
 
     public CargadorVE(String fabricante, int anioInstalacion, int voltajeNominal, TipoConector tipoConector, TipoCargador tipoCargador, int numeroConectores, int puestosParqueo, double potenciaMaxima, Ubicacion ubicacion) {
         this.fabricante = fabricante;
@@ -187,9 +195,17 @@ public class CargadorVE {
     public void mostrar(boolean detallado) {
         mostrar();
         if (detallado) {
-            System.out.println("  (bitacora aun no implementada)");
-        }
+            System.out.println("  Bitacora completa (" + bitacora.size() + " registro(s)):");
+            for (RegistroSesion r : bitacora) {
+                System.out.println("    " + r.describir());
+            }
+        }    
     }
+
+public Vector<RegistroSesion> getBitacora() {
+        return bitacora;
+    }
+
 
     public static CargadorVE[] filtrar(CargadorVE[] flota, TipoConector conector) {
         List<CargadorVE> resultado = new ArrayList<CargadorVE>();
@@ -226,7 +242,107 @@ public class CargadorVE {
         }
         return resultado.toArray(new CargadorVE[0]);
     }
+    public static int[] contarPorTipo(CargadorVE[] flota) {
+        int[] conteo = new int[TipoCargador.values().length];
+        if (flota == null) {
+            return conteo;
+        }
+        for (CargadorVE c : flota) {
+            if (c != null && c.tipoCargador != null) {
+                conteo[c.tipoCargador.ordinal()]++;
+            }
+        }
+        return conteo;
     }
+
+    public static int getTotalCargadores() {
+        return totalCargadores;
+    }
+
+    public static int getContadorRegistros() {
+        return contadorRegistros;
+    }
+
+    public static CargadorVE mayorPotencia(CargadorVE[] flota) {
+        CargadorVE mayor = null;
+        if (flota != null) {
+            for (CargadorVE c : flota) {
+                if (c == null) {
+                    continue;
+                }
+                if (mayor == null || c.potenciaActual > mayor.potenciaActual) {
+                    mayor = c;
+                }
+            }
+        }
+        return mayor;
+    }
+
+    public static double promedioPotencia(CargadorVE[] flota) {
+        if (flota == null) {
+            return 0;
+        }
+        double suma = 0;
+        int cantidad = 0;
+        for (CargadorVE c : flota) {
+            if (c != null) {
+                suma += c.potenciaActual;
+                cantidad++;
+            }
+        }
+        return cantidad == 0 ? 0 : suma / cantidad;
+    }
+
+    public static int excesosDePotenciaContratada(CargadorVE[] flota) {
+        int contador = 0;
+        if (flota == null) {
+            return 0;
+        }
+        for (CargadorVE c : flota) {
+            if (c == null) {
+                continue;
+            }
+            for (RegistroSesion r : c.bitacora) {
+                if (r.isValido() && r.getPotenciaActual() > LIMITE_RED) {
+                    contador++;
+                }
+            }
+        }
+        return contador;
+    }
+
+    public class RegistroSesion {
+
+        private final int numero;
+        private final String fabricante;
+        private final int anioInstalacion;
+        private final double potenciaActual;
+        private final String evento;
+        private final boolean valido;
+
+        public RegistroSesion(String evento, boolean valido) {
+            this.fabricante = CargadorVE.this.fabricante;
+            this.anioInstalacion = CargadorVE.this.anioInstalacion;
+            this.potenciaActual = CargadorVE.this.potenciaActual;
+            this.evento = evento;
+            this.valido = valido;
+            contadorRegistros++;
+            this.numero = contadorRegistros;
+        }
+
+        public boolean isValido() { return valido; }
+        public double getPotenciaActual() { return potenciaActual; }
+        public String getEvento() { return evento; }
+        public int getNumero() { return numero; }
+
+        public String describir() {
+            return "#" + numero + " [" + (valido ? "VALIDO" : "INVALIDO") + "] "
+                    + fabricante + " (" + anioInstalacion + ") -> " + evento
+                    + " | Potencia en ese momento: " + String.format("%.2f", potenciaActual) + " kW";
+        }
+    }
+
+}
 
     
 
